@@ -1,0 +1,25 @@
+<form action="{% url 'customers:create' %}" method="post" id="new-customer-form-form">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="company_name" class="form-label">Müşteri Adı</label>
+            <input type="text" name="company_name" id="company_name" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+            <label for="contact_email" class="form-label">E-Posta</label>
+            <input type="email" name="contact_email" id="contact_email" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="contact_phone" class="form-label">Telefon</label>
+            <input type="text" name="contact_phone" id="contact_phone" class="form-control" >
+        </div>
+        <div class="col-md-3">
+            <label for="address" class="form-label">Adres</label>
+            <input type="text" name="address" id="address" class="form-control">
+        </div>
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success">Kaydet</button>
+            <button type="button" id="cancel-product-create" class="btn btn-secondary">İptal</button>
+        </div>
+    </div>
+</form>
+

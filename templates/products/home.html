@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% load custom_filters_for_product %}
+{% block title %}Ürün Listesi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Ürün Listesi</h2>
+
+    <form method="get" id="searchForm" class="d-flex flex-wrap align-items-center justify-content-center text-center">
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Ürün Ara:</label>
+            <input type="text" id="search-input" name="search" value="{{ request.GET.search }}" class="form-control mb-3" placeholder="Ürün ara...">
+        </div>
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Fiyat Sıralama:</label>
+            <select name="ordering_price" class="form-select mb-3" >
+                <option value="">Fiyat Sıraması Yok</option>
+                <option value="price"{% if request.GET.ordering_price == 'price' %}selected{% endif %}>Artan Fiyat</option>
+                <option value="-price" {% if request.GET.ordering_price == '-price' %}selected{% endif %}>Azalan Fiyat</option>
+            </select>
+        </div>
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Stok Sıralaması:</label>
+            <select name="ordering_stock" class="form-select mb-3">
+                <option value="">Stoğa Göre Sırala</option>
+                <option value="stock" {% if request.GET.ordering_stock == 'stock' %}selected{% endif %}>Artan Stock</option>
+                <option value="-stock" {% if request.GET.ordering_stock == '-stock' %}selected{% endif %}>Azalan Stock</option>
+            </select>
+        </div>
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Listelenecek Ürün:</label>
+            <select name="limit" class="form-select mb-3">
+                <option value="10" {% if request.GET.limit == '10' %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.limit == '20' or not request.GET.limit %}selected{% endif %}>20</option>
+                <option value="50" {% if request.GET.limit == '50' %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.limit == '100' %}selected{% endif %}>100</option>
+                <option value="200" {% if request.GET.limit == '200' %}selected{% endif %}>200</option>
+                <option value="500" {% if request.GET.limit == '500' %}selected{% endif %}>500</option>
+                <option value="1000" {% if request.GET.limit == '1000' %}selected{% endif %}>1000</option>
+                <option value="9999999999" {% if request.GET.limit == '9999999999' %}selected{% endif %}>Tümü</option>
+            </select>
+        </div>
+        <div class="me-2 mt-2"><button type="submit" class="btn btn-primary">Ara</button></div>
+    </form>
+    
+    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded">
+        <div class="col-1">ID</div>
+        <div class="col">Adı</div>
+        <div class="col">Açıklama</div>
+        <div class="col">Fiyat</div>
+        <div class="col">Stok</div>
+        <div class="col">İşlemler</div>
+    </div>
+
+    {% for product in products %}
+    <form action="{% url 'products:update' product.id %}" method="post" class="border p-2 my-2 rounded bg-light product-form">
+        {% csrf_token %}
+        <script id="product_data_{{ product.id }}" type="application/json">
+            {{ product|json_script:"product_data_"|safe }}
+        </script>
+        <div class="row align-items-center gy-2" id="row-{{ product.id }}">
+            <div class="col-1">{{ product.id }}</div>
+            <div class="col">
+                <input type="text" name="name" value="{{ product.name }}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="text" name="description" value="{{ product.description }}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="number" name="price" value="{{ product.price }}" step="0.01" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="number" name="stock" value="{{ product.stock }}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col d-flex gap-1 flex-wrap">
+                <button type="button" class="btn btn-sm btn-warning edit-btn">Güncelle</button>
+                <button type="submit" class="btn btn-sm btn-success save-btn d-none">Kaydet</button>
+                <button type="button" class="btn btn-sm btn-secondary cancel-btn d-none">Vazgeç</button>
+                <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="{{ product.id }}">Sil</a>
+            </div>
+        </div>
+    </form>
+    {% endfor %}
+
+    {% if is_paginated %}
+    <nav aria-label="Sayfalar">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">« Önceki</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">« Önceki</span></li>
+            {% endif %}
+            {% for num in paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Sonraki »</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Sonraki »</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <div id="new-product-form" class="border p-3 mt-4 rounded bg-light d-none"></div>
+    <div class="text-center mt-3">
+        <button id="show-new-product-form" class="btn btn-success">+ Yeni Ürün Ekle</button>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function submitForm(){
+        const form = document.getElementById("new-product-form-form");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: formData,
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Başarılı",
+                        text: "Ürün başarıyla oluşturuldu.",
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Hata",
+                        text: data.errors || "Bir hata oluştu.",
+                    });
+                }
+            });
+        });
+
+        document.getElementById("cancel-product-create").addEventListener("click", () => {
+            document.getElementById("new-product-form-container").innerHTML = "";
+            document.getElementById("show-new-product-form").classList.remove("d-none");
+        });
+
+    }
+    
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".edit-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            row.querySelectorAll("input").forEach(input => input.removeAttribute("readonly"));
+            row.querySelector(".save-btn").classList.remove("d-none");
+            row.querySelector(".cancel-btn").classList.remove("d-none");
+            button.classList.add("d-none");
+        });
+    });
+
+    document.querySelectorAll(".cancel-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            const productId = row.id.split("-")[1];
+            const originalData = JSON.parse(document.getElementById(`product_data_${productId}`).textContent);
+
+            row.querySelector("input[name='name']").value = originalData.name;
+            row.querySelector("input[name='description']").value = originalData.description;
+            row.querySelector("input[name='price']").value = originalData.price;
+            row.querySelector("input[name='stock']").value = originalData.stock;
+
+            row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+            row.querySelector(".save-btn").classList.add("d-none");
+            row.querySelector(".cancel-btn").classList.add("d-none");
+            row.querySelector(".edit-btn").classList.remove("d-none");
+        });
+    });
+
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            const productId = this.getAttribute("data-id");
+
+            Swal.fire({
+                title: "Emin misiniz?",
+                text: "Bu ürün kalıcı olarak silinecek!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Evet, sil!",
+                cancelButtonText: "İptal"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/products/delete/${productId}/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCookie("csrftoken") 
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            Swal.fire("Hata", "Ürün silinemedi.", "error");
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire("Hata", "Sunucuya bağlanırken bir sorun oluştu.", "error");
+                    });
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll("form").forEach(form => {
+        if (form.id === 'searchForm') return;
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Başarılı",
+                        text: "Ürün başarıyla güncellendi.",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    const row = form.querySelector(".row");
+                    row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+                    row.querySelector(".save-btn").classList.add("d-none");
+                    row.querySelector(".cancel-btn").classList.add("d-none");
+                    row.querySelector(".edit-btn").classList.remove("d-none");
+                } else {
+                    alert("Hata: " + JSON.stringify(data.errors));
+                }
+            });
+        });
+    });
+
+    document.getElementById("show-new-product-form").addEventListener("click", () => {
+        fetch("{% url 'products:create' %}")
+        .then(response => response.text())
+        .then(html => {
+            const container = document.getElementById("new-product-form");
+            container.innerHTML = html;
+            container.classList.remove("d-none");
+            document.getElementById("show-new-product-form").classList.add("d-none");
+            submitForm();
+        });
+    });
+});
+</script>
+{% endblock %}

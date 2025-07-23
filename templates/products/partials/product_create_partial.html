@@ -1,0 +1,26 @@
+<form action="{% url 'products:create' %}" method="post" id="new-product-form-form">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="name" class="form-label">Ürün Adı</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+            <label for="price" class="form-label">Fiyat</label>
+            <input type="number" name="price" id="price" class="form-control" step="0.01" required>
+        </div>
+        <div class="col-md-3">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" name="stock" id="stock" class="form-control" step="1" required>
+        </div>
+        <div class="col-md-3">
+            <label for="Açıklama" class="form-label">Açıklama</label>
+            <input type="text" name="description" id="description" class="form-control" >
+        </div>
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success">Kaydet</button>
+            <button type="button" id="cancel-product-create" class="btn btn-secondary">İptal</button>
+        </div>
+    </div>
+</form>
+

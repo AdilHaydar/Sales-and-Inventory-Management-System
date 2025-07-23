@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load custom_filters %}
+{% block title %}Sipariş Listesi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Sipariş Listesi</h2>
+    
+    <div class="d-flex justify-content-center">
+        <form method="get" class="d-flex flex-wrap align-items-center justify-content-center mb-4 text-center">
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Ürün:</label>
+            <select name="product" class="form-select">
+                <option value="">Hepsi</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" {% if request.GET.product == product.id|stringformat:"s" %}selected{% endif %}>{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Müşteri:</label>
+            <select name="customer" class="form-select">
+                <option value="">Hepsi</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.company_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Başlangıç:</label>
+            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Bitiş:</label>
+            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Durum:</label>
+            <select name="status" class="form-select">
+                <option value="">Hepsi</option>
+                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Listelenecek Sipariş:</label>
+            <select name="limit" class="form-select">
+                <option value="10" {% if request.GET.limit == '10' %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.limit == '20' or not request.GET.limit %}selected{% endif %}>20</option>
+                <option value="50" {% if request.GET.limit == '50' %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.limit == '100' %}selected{% endif %}>100</option>
+                <option value="200" {% if request.GET.limit == '200' %}selected{% endif %}>200</option>
+                <option value="500" {% if request.GET.limit == '500' %}selected{% endif %}>500</option>
+                <option value="1000" {% if request.GET.limit == '1000' %}selected{% endif %}>1000</option>
+                <option value="9999999999" {% if request.GET.limit == '9999999999' %}selected{% endif %}>Tümü</option>
+            </select>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-outline-success">Filtrele</button>
+        </div>
+
+        </form>
+    </div>
+
+    
+
+    <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center flex-wrap">
+            <strong>Genel Toplam:</strong> {{ total_orders }}₺
+            <span class="ms-3">Bekleyen: 
+                <span class="fw-bold text-muted">{{ total_pending|intcomma|add:"₺" }}</span>
+            </span>
+            <span class="ms-3">Tamamlanan: 
+                <span class="fw-bold text-success">{{ total_completed|intcomma|add:"₺" }}</span>
+            </span>
+        </div>
+        <div>
+            <a href="{% url 'orders:order_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-primary">
+                PDF Olarak İndir
+            </a>
+        </div>
+    </div>
+
+
+    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded">
+        <div class="col-1">ID</div>
+        <div class="col-2">Sipariş Tarihi</div>
+        <div class="col">Ürün</div>
+        <div class="col">Müşteri</div>
+        <div class="col-1">Adet</div>
+        <div class="col">Fiyat</div>
+        <div class="col">Toplam ({{ total_amount }}₺)</div>
+        <div class="col">Durum</div>
+        <div class="col">İşlemler</div>
+    </div>
+
+    {% for order in orders %}
+    <form action="{% url 'orders:order_update' order.id %}" method="post" id="form-{{ order.id }}" class="border p-2 my-2 rounded bg-light order-form update-order-form">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" value="{{ order.product.id }}">
+        <script id="order_data_{{ order.id }}" type="application/json">
+            {{ order|json_script:"order_data_" }}
+        </script>
+        <div class="row align-items-center gy-2" id="row-{{ order.id }}">
+            <div class="col-1">{{ order.id }}</div>
+            <div class="col-2">
+                {{ order.order_date|date:'d-m-Y H:i' }}
+            </div>
+            <div class="col">
+                {{order.product.name}}
+            </div>
+
+            <div class="col">
+                {{order.customer.company_name}}
+            </div>
+
+            <div class="col-1">
+                <input type="number" name="quantity" value="{{ order.quantity }}" class="form-control form-control-sm" readonly>
+            </div>
+
+            <div class="col">
+                <input type="number" name="price" step="0.01" value="{{ order.price }}" class="form-control form-control-sm" readonly>
+            </div>
+
+            <div class="col total-price" data-id="{{ order.id }}">
+                {{ order.total_price }} ₺
+            </div>
+
+            <div class="col">
+                <select name="status" class="form-select form-select-sm" disabled>
+                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Beklemede</option>
+                    <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Tamamlandı</option>
+                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>İptal Edildi</option>
+                </select>
+            </div>
+
+            <div class="col d-flex gap-1 flex-wrap">
+                <button type="button" class="btn btn-sm btn-warning edit-btn">Güncelle</button>
+                <button type="submit" class="btn btn-sm btn-success save-btn d-none">Kaydet</button>
+                <button type="button" class="btn btn-sm btn-secondary cancel-btn d-none">Vazgeç</button>
+                <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="{{ order.id }}">Sil</a>
+            </div>
+        </div>
+    </form>
+    {% endfor %}
+
+    <!-- Pagination -->
+     {% if is_paginated %}
+    <nav aria-label="Sayfalar">
+        <ul class="pagination">
+
+            {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ orders.previous_page_number }}">« Önceki</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">« Önceki</span></li>
+            {% endif %}
+
+            {% for num in orders.paginator.page_range %}
+                <li class="page-item {% if orders.number == num %}active{% endif %}">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+
+            {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ orders.next_page_number }}">Sonraki »</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Sonraki »</span></li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+
+    <div id="new-order-form" class="border p-3 mt-4 rounded bg-light d-none"></div>
+    <div class="text-center mt-3">
+        <button id="show-new-order-form" class="btn btn-success">+ Yeni Kayıt Ekle</button>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".edit-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            row.querySelectorAll("input").forEach(input => input.removeAttribute("readonly"));
+            row.querySelector("select[name='status']").removeAttribute("disabled");
+
+            row.querySelector(".save-btn").classList.remove("d-none");
+            row.querySelector(".cancel-btn").classList.remove("d-none");
+            button.classList.add("d-none");
+        });
+    });
+
+    document.querySelectorAll(".cancel-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            const orderId = row.id.split("-")[1];
+            const originalData = JSON.parse(document.getElementById(`order_data_${orderId}`).textContent);
+
+            row.querySelector("input[name='quantity']").value = originalData.quantity;
+            row.querySelector("input[name='price']").value = originalData.price;
+            row.querySelector("select[name='status']").value = originalData.status;
+            row.querySelector(".total-price").textContent = originalData.total_price + " ₺";
+
+            row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+            row.querySelector("select[name='status']").setAttribute("disabled", true);
+
+            row.querySelector(".save-btn").classList.add("d-none");
+            row.querySelector(".cancel-btn").classList.add("d-none");
+            row.querySelector(".edit-btn").classList.remove("d-none");
+        });
+    });
+
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            const orderId = this.getAttribute("data-id");
+
+            Swal.fire({
+                title: "Emin misiniz?",
+                text: "Bu sipariş kalıcı olarak silinecek!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Evet, sil!",
+                cancelButtonText: "İptal"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/orders/${orderId}/delete/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": document.querySelector('input[name="csrfmiddlewaretoken"]').value,
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Silindi",
+                                text: "Sipariş başarıyla silindi.",
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            document.getElementById(`form-${orderId}`).remove();
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Hata",
+                                text: "Sipariş silinirken bir hata oluştu.",
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error deleting order:", error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Hata",
+                            text: "Sipariş silinirken bir hata oluştu.",
+                        });
+                    });
+                } else {
+                    Swal.fire("İptal Edildi", "Sipariş silinmedi.", "info");
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll(".update-order-form").forEach(form => {
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Başarılı",
+                        text: "Sipariş başarıyla güncellendi.",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    const row = form.querySelector(".row");
+                    row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+                    row.querySelector("select[name='status']").setAttribute("disabled", true);
+                    row.querySelector(".save-btn").classList.add("d-none");
+                    row.querySelector(".cancel-btn").classList.add("d-none");
+                    row.querySelector(".edit-btn").classList.remove("d-none");
+                } else {
+                    alert("Hata: " + JSON.stringify(data.errors));
+                }
+            });
+        });
+    });
+});
+
+function initProductSelectListener() {
+    const productSelect = document.getElementById('product-select');
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            const productId = this.value;
+            if (productId) {
+                fetch(`/api/v1/products/${productId}/get_product_price/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.querySelector('input[id="newPrice"]').value = data.price;
+                    })
+                    .catch(error => console.error('Error fetching product price:', error));
+            } else {
+                document.querySelector('input[name="price"]').value = '';
+            }
+        });
+    }
+}
+
+function attachFormListeners() {
+    const quantityInput = document.getElementById('newQuantity');
+    const priceInput = document.getElementById('newPrice');
+    const totalPriceDiv = document.getElementById('totalPrice');
+
+    function calculateTotal() {
+        const quantity = parseFloat(quantityInput?.value) || 0;
+        const price = parseFloat(priceInput?.value) || 0;
+        const total = quantity * price;
+
+        if (totalPriceDiv) {
+            totalPriceDiv.innerText = total > 0 ? `Toplam: ${total.toFixed(2)} ₺` : '';
+        }
+    }
+
+    if (quantityInput && priceInput) {
+        quantityInput.addEventListener('input', calculateTotal);
+        priceInput.addEventListener('input', calculateTotal);
+    }
+}
+
+    function initiliazeNewOrderForm() {
+        const createOrderForm = document.getElementById("create-order-form");
+
+        if (createOrderForm) {
+            createOrderForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(createOrderForm);
+                const csrfToken = createOrderForm.querySelector("[name=csrfmiddlewaretoken]").value;
+
+                fetch(createOrderForm.action, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Sipariş Oluşturuldu",
+                            text: "Yeni sipariş başarıyla kaydedildi.",
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+
+                        // createOrderForm.reset();
+                        window.location.reload();
+
+
+                    } else {
+                        let errorText = "";
+
+                        if (typeof data.errors === "string") {
+                            errorText = data.errors;  // direkt string hata varsa
+                        } else if (typeof data.errors === "object" && data.errors !== null) {
+                            errorText = Object.entries(data.errors)
+                                .map(([field, messages]) => {
+                                    const msgList = Array.isArray(messages) ? messages : [messages];
+                                    return `${field}: ${msgList.join(", ")}`;
+                                })
+                                .join("\n");
+                        } else {
+                            errorText = "Bilinmeyen bir hata oluştu.";
+                        }
+
+
+                        Swal.fire({
+                            icon: "error",
+                            title: "Hata Oluştu",
+                            text: errorText
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                    Swal.fire("Hata", "Beklenmeyen bir hata oluştu.", "error");
+                });
+            });
+        }
+    }
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("show-new-order-form").addEventListener("click", () => {
+        fetch("{% url 'orders:order_create' %}")
+        .then(response => response.text())
+        .then(html => {
+            const container = document.getElementById("new-order-form");
+            container.innerHTML = html;
+            container.classList.remove("d-none");
+            document.getElementById("show-new-order-form").classList.add("d-none");
+            initProductSelectListener();
+            attachFormListeners();
+            initiliazeNewOrderForm();
+        });
+    });
+});
+
+document.querySelectorAll(".order-form").forEach(form => {
+    const row = form.querySelector(".row");
+    const quantityInput = form.querySelector('input[name="quantity"]');
+    const priceInput = form.querySelector('input[name="price"]');
+    const totalPriceDiv = form.querySelector(".total-price");
+
+    function updateTotal() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = quantity * price;
+        totalPriceDiv.textContent = total.toFixed(2) + " ₺";
+    }
+
+    quantityInput.addEventListener("input", updateTotal);
+    priceInput.addEventListener("input", updateTotal);
+});
+
+
+
+</script>
+{% endblock %}

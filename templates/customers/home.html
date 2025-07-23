@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% load custom_customer_filters %}
+{% load humanize %}
+{% block title %}Müşteri Listesi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Müşteri Listesi</h2>
+
+    <form method="get" id="searchForm" class="d-flex flex-wrap align-items-center justify-content-center text-center">
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Müşteri Ara:</label>
+            <input type="text" id="search-input" name="search" value="{{ request.GET.search }}" class="form-control mb-3" placeholder="Müşteri ara...">
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Listelenecek Müşteri:</label>
+            <select name="limit" class="form-select mb-3">
+                <option value="10" {% if request.GET.limit == '10' %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.limit == '20' or not request.GET.limit %}selected{% endif %}>20</option>
+                <option value="50" {% if request.GET.limit == '50' %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.limit == '100' %}selected{% endif %}>100</option>
+                <option value="200" {% if request.GET.limit == '200' %}selected{% endif %}>200</option>
+                <option value="500" {% if request.GET.limit == '500' %}selected{% endif %}>500</option>
+                <option value="1000" {% if request.GET.limit == '1000' %}selected{% endif %}>1000</option>
+                <option value="9999999999" {% if request.GET.limit == '9999999999' %}selected{% endif %}>Tümü</option>
+            </select>
+        </div>
+        <div class="me-2 mt-2"><button type="submit" class="btn btn-primary">Ara</button></div>
+    </form>
+
+    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded">
+        <div class="col-1">ID</div>
+        <div class="col">Adı</div>
+        <div class="col">E-posta</div>
+        <div class="col">Telefon</div>
+        <div class="col">Adres</div>
+        <div class="col">Bekleyen Tutar</div>
+        <div class="col">Tamamlanan Tutar</div>
+        <div class="col">İşlemler</div>
+    </div>
+
+    {% for customer in customers %}
+    <form action="{% url 'customers:update' customer.id %}" method="post" class="border p-2 my-2 rounded bg-light customer-form">
+        {% csrf_token %}
+        <script id="customer_data_{{ customer.id }}" type="application/json">
+            {{ customer|json_script:"customer_data_"|safe }}
+        </script>
+        <div class="row align-items-center gy-2" id="row-{{ customer.id }}">
+            <div class="col-1">{{ customer.id }}</div>
+            <div class="col">
+                <input type="text" name="company_name" value="{{ customer.company_name }}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="email" name="contact_email" value="{% if customer.contact_email %}{{ customer.contact_email }}{% endif %}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="text" name="contact_phone" value="{% if customer.contact_phone %}{{ customer.contact_phone }}{% endif %}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <input type="text" name="address" value="{% if customer.address %}{{ customer.address }}{% endif %}" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col">
+                <span class="text-success fw-bold">
+                    {% if customer.pending_total%}
+                        {{ customer.pending_total|floatformat:2|intcomma|add:"₺" }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+            <div class="col">
+                <span class="text-primary fw-bold">
+                    {% if customer.completed_total %}
+                        {{ customer.completed_total|floatformat:2|intcomma|add:"₺" }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </span>
+            </div>
+            <div class="col d-flex gap-1 flex-wrap">
+                <button type="button" class="btn btn-sm btn-warning edit-btn">Güncelle</button>
+                <button type="submit" class="btn btn-sm btn-success save-btn d-none">Kaydet</button>
+                <button type="button" class="btn btn-sm btn-secondary cancel-btn d-none">Vazgeç</button>
+                <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="{{ customer.id }}">Sil</a>
+            </div>
+        </div>
+    </form>
+    {% endfor %}
+    {% if is_paginated %}
+    <nav aria-label="Sayfalar">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">« Önceki</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">« Önceki</span></li>
+            {% endif %}
+            {% for num in paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Sonraki »</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Sonraki »</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <div id="new-customer-form" class="border p-3 mt-4 rounded bg-light d-none"></div>
+    <div class="text-center mt-3">
+        <button id="show-new-customer-form" class="btn btn-success">+ Yeni Müşteri Ekle</button>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function submitForm(){
+        const form = document.getElementById("new-customer-form-form");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: formData,
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Başarılı",
+                        text: "Müşteri başarıyla oluşturuldu.",
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Hata",
+                        text: data.errors || "Bir hata oluştu.",
+                    });
+                }
+            });
+        });
+
+        document.getElementById("cancel-customer-create").addEventListener("click", () => {
+            document.getElementById("new-customer-form-container").innerHTML = "";
+            document.getElementById("show-new-customer-form").classList.remove("d-none");
+        });
+
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".edit-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            row.querySelectorAll("input").forEach(input => input.removeAttribute("readonly"));
+            row.querySelector(".save-btn").classList.remove("d-none");
+            row.querySelector(".cancel-btn").classList.remove("d-none");
+            button.classList.add("d-none");
+        });
+    });
+
+    document.querySelectorAll(".cancel-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const row = button.closest(".row");
+            const customerId = row.id.split("-")[1];
+            const originalData = JSON.parse(document.getElementById(`customer_data_${customerId}`).textContent);
+
+            row.querySelector("input[name='company_name']").value = originalData.company_name;
+            row.querySelector("input[name='contact_email']").value = originalData.contact_email;
+            row.querySelector("input[name='contact_phone']").value = originalData.contact_phone;
+            row.querySelector("input[name='address']").value = originalData.address;
+
+            row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+            row.querySelector(".save-btn").classList.add("d-none");
+            row.querySelector(".cancel-btn").classList.add("d-none");
+            row.querySelector(".edit-btn").classList.remove("d-none");
+        });
+    });
+
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            const customerId = this.getAttribute("data-id");
+
+            Swal.fire({
+                title: "Emin misiniz?",
+                text: "Bu ürün kalıcı olarak silinecek!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Evet, sil!",
+                cancelButtonText: "İptal"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/customers/delete/${customerId}/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCookie("csrftoken") 
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            Swal.fire("Hata", "Müşteri silinemedi.", "error");
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire("Hata", "Sunucuya bağlanırken bir sorun oluştu.", "error");
+                    });
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll("form").forEach(form => {
+        if (form.id === 'searchForm') return;
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Başarılı",
+                        text: "Müşteri başarıyla güncellendi.",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    const row = form.querySelector(".row");
+                    row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
+                    row.querySelector(".save-btn").classList.add("d-none");
+                    row.querySelector(".cancel-btn").classList.add("d-none");
+                    row.querySelector(".edit-btn").classList.remove("d-none");
+                } else {
+                    alert("Hata: " + JSON.stringify(data.errors));
+                }
+            });
+        });
+    });
+
+    document.getElementById("show-new-customer-form").addEventListener("click", () => {
+        fetch("{% url 'customers:create' %}")
+        .then(response => response.text())
+        .then(html => {
+            const container = document.getElementById("new-customer-form");
+            container.innerHTML = html;
+            container.classList.remove("d-none");
+            document.getElementById("show-new-customer-form").classList.add("d-none");
+            submitForm();
+        });
+    });
+});
+</script>
+{% endblock %}
