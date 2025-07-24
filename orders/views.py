@@ -87,6 +87,10 @@ class OrderCreateView(CreateView):
     model = Order
     fields = ['customer', 'product', 'quantity', 'price', 'status']
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         products = Product.objects.filter(stock__gt=0, is_active=True)
         customers = Customer.objects.filter(is_active=True)

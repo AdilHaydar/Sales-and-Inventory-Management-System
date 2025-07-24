@@ -12,6 +12,5 @@ class ProductViewSet(ListModelMixin ,GenericViewSet):
     @action(detail=True, methods=['get'])
     def get_product_price(self, request, pk=None):
         product = Product.objects.get(pk=pk)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
+        return Response({"price": product.price})
     

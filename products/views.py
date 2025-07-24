@@ -1,8 +1,9 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from .models import Product
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 class ProductListView(ListView):
@@ -36,6 +37,10 @@ class ProductCreateView(CreateView):
     model = Product
     fields = ['name', 'description', 'price', 'stock']
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         html = render_to_string('products/partials/product_create_partial.html', {}, request=request)
         return HttpResponse(html)
@@ -56,6 +61,10 @@ class ProductUpdateView(UpdateView):
     fields = ['name', 'description', 'price', 'stock']
     http_method_names = ['post']
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
@@ -72,11 +81,14 @@ class ProductUpdateView(UpdateView):
 class ProductDeleteView(DeleteView):
     model = Product
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.object.is_active = False
         self.object.save()
-        # self.object.delete()
         return JsonResponse({'success': True})
     
     def get(self, request, *args, **kwargs):

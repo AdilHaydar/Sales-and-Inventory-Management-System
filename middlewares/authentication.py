@@ -21,7 +21,6 @@ class LoginRequiredMiddleware:
     def __call__(self, request):
         path = request.path_info
 
-        # Basic Auth'ı manuel çözümle
         if not request.user.is_authenticated:
             auth_header = request.META.get('HTTP_AUTHORIZATION')
             if auth_header and auth_header.startswith('Basic '):

@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from django.views.generic import View, ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import View, ListView, CreateView, UpdateView, DeleteView
 from .models import Customer
-from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Case, When, F, DecimalField, Value
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 
@@ -47,6 +48,10 @@ class CustomerCreateView(CreateView):
     model = Customer
     fields = ['company_name', 'contact_email', 'contact_phone', 'address']
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         html = render_to_string('customers/partials/customer_create_partial.html', request=request)
         return HttpResponse(html)
@@ -68,6 +73,10 @@ class CustomerUpdateView(UpdateView):
     fields = ['company_name', 'contact_email', 'contact_phone', 'address']
     http_method_names = ['post']
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
@@ -83,6 +92,10 @@ class CustomerUpdateView(UpdateView):
 
 class CustomerDeleteView(DeleteView):
     model = Customer
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()

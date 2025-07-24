@@ -14,7 +14,7 @@ class Product(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        if self.pk is not None:  # New instance
+        if self.pk is not None:
             old_instance = type(self).objects.get(pk=self.pk)
             if self.stock < 0:
                 raise ValueError("Değişiklik Sonrası Ürün Stoğu Negatif Olamaz! Mevcut Stok: {}".format(old_instance.stock))
@@ -23,4 +23,4 @@ class Product(models.Model):
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
-        ordering = ['name']  # Default ordering by name
+        ordering = ['name']
