@@ -1,11 +1,14 @@
 from django.shortcuts import render
-from django.views.generic import View, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
 from .models import Customer
+from products.models import Product
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.db.models import Sum, Case, When, F, DecimalField, Value
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import F, ExpressionWrapper, DecimalField, Sum
+from decimal import Decimal
 # Create your views here.
 
 
@@ -42,6 +45,113 @@ class CustomerListView(ListView):
             )
         ).order_by('company_name')
     
+class CustomerDetailView(DetailView):
+    model = Customer
+    template_name = 'customers/detail.html'
+    context_object_name = 'customer'
+
+    def filters(self, params):
+        filters = {}
+        
+        for key, value in params.items():
+            if value:
+                if key == 'start_date':
+                    filters['order_date__date__gte'] = value
+                elif key == 'end_date':
+                    filters['order_date__date__lte'] = value
+                elif key in ['product', 'customer', 'status']:
+                    filters[key] = value
+        return filters
+        
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        orders = context['object'].orders.filter(**self.filters(self.request.GET))
+        context['orders'] = orders
+        
+        annotated_queryset = context['object'].orders.annotate(total_amount = ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField()))
+        total_pending = annotated_queryset.filter(status='pending').aggregate(
+            total_pending=Sum('total_amount')).get('total_pending', 0)
+        
+        total_cancelled = annotated_queryset.filter(status='cancelled').aggregate(
+            total_cancelled=Sum('total_amount')).get('total_cancelled', 0)
+
+        total_completed = annotated_queryset.filter(status='completed').aggregate(
+            total_completed=Sum('total_amount')).get('total_completed', 0)
+        
+        total_amount = sum(order.total_price for order in orders)
+        total_total = sum(order.total_price for order in annotated_queryset)
+        
+        context['total_pending'] = "{:.2f}".format(total_pending)
+        context['total_completed'] = "{:.2f}".format(total_completed)
+        context['total_cancelled'] = "{:.2f}".format(total_cancelled)
+        context['total_amount'] = "{:.2f}".format(total_amount)
+        context['total_total'] = "{:.2f}".format(total_total)
+
+        context['products'] = Product.objects.values('id', 'name')
+        
+
+        return context
+
+
+
+
+
+    # def get(self, request):
+    #     queryset = Order.objects.filter(customer__is_active=True)
+    #     queryset_on_annotate = queryset.annotate(
+    #         total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
+    #     )
+    #     total_pending = queryset_on_annotate.filter(status='pending').aggregate(
+    #         total_pending=Sum('total_amount'))['total_pending'] or 0
+
+    #     total_completed = queryset_on_annotate.filter(status='completed').aggregate(
+    #         total_completed=Sum('total_amount'))['total_completed'] or 0
+    #     filters = {}
+    #     params = request.GET.copy()
+
+    #     for key, value in params.items():
+    #         if value:
+    #             if key == 'start_date':
+    #                 filters['order_date__date__gte'] = value
+    #             elif key == 'end_date':
+    #                 filters['order_date__date__lte'] = value
+    #             elif key in ['product', 'customer', 'status']:
+    #                 filters[key] = value
+
+    #     queryset = queryset.filter(**filters).annotate(
+    #         total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
+    #     ).order_by('-order_date')
+
+        
+
+    #     paginate_by = self.get_paginate_by(queryset)
+    #     paginator = Paginator(queryset, paginate_by)
+
+    #     page_number = self.request.GET.get("page")
+    #     try:
+    #         page_obj = paginator.page(page_number)
+    #     except PageNotAnInteger:
+    #         page_obj = paginator.page(1)
+    #     except EmptyPage:
+    #         page_obj = paginator.page(paginator.num_pages)
+
+    #     total_amount = sum(order.total_amount for order in page_obj)
+
+    #     context = {
+    #         'orders': page_obj,
+    #         'customers': Customer.objects.filter(is_active=True),
+    #         'products': Product.objects.all(),
+    #         'statuses': STATUS_CHOICES,
+    #         'total_amount': Decimal(total_amount).quantize(Decimal('0.00')),
+    #         'total_pending': "{:.2f}".format(total_pending),
+    #         'total_completed': "{:.2f}".format(total_completed),
+    #         'is_paginated': page_obj.has_other_pages(),
+    #     }
+
+    #     return render(request, self.template_name, context)
+
+
 
 
 class CustomerCreateView(CreateView):

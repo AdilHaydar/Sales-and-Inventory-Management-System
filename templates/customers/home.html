@@ -29,7 +29,7 @@
         <div class="me-2 mt-2"><button type="submit" class="btn btn-primary">Ara</button></div>
     </form>
 
-    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded">
+    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded text-center">
         <div class="col-1">ID</div>
         <div class="col">Adı</div>
         <div class="col">E-posta</div>
@@ -37,7 +37,7 @@
         <div class="col">Adres</div>
         <div class="col">Bekleyen Tutar</div>
         <div class="col">Tamamlanan Tutar</div>
-        <div class="col">İşlemler</div>
+        <div class="col-2">İşlemler</div>
     </div>
 
     {% for customer in customers %}
@@ -78,7 +78,8 @@
                     {% endif %}
                 </span>
             </div>
-            <div class="col d-flex gap-1 flex-wrap">
+            <div class="col-2 d-flex gap-1 flex-wrap">
+                <button type="button" class="btn btn-sm btn-info detail-btn" onclick="goDetailPage({{customer.id}})" >Detay</button>
                 <button type="button" class="btn btn-sm btn-warning edit-btn">Güncelle</button>
                 <button type="submit" class="btn btn-sm btn-success save-btn d-none">Kaydet</button>
                 <button type="button" class="btn btn-sm btn-secondary cancel-btn d-none">Vazgeç</button>
@@ -116,6 +117,10 @@
 </div>
 
 <script>
+    function goDetailPage(customer_id) {
+        window.location.href = `/customers/detail/${customer_id}/`;
+    };
+    
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
@@ -180,6 +185,7 @@
             row.querySelectorAll("input").forEach(input => input.removeAttribute("readonly"));
             row.querySelector(".save-btn").classList.remove("d-none");
             row.querySelector(".cancel-btn").classList.remove("d-none");
+            row.querySelector(".detail-btn").classList.add("d-none");
             button.classList.add("d-none");
         });
     });
@@ -199,6 +205,7 @@
             row.querySelector(".save-btn").classList.add("d-none");
             row.querySelector(".cancel-btn").classList.add("d-none");
             row.querySelector(".edit-btn").classList.remove("d-none");
+            row.querySelector(".detail-btn").classList.remove("d-none");
         });
     });
 
@@ -287,6 +294,8 @@
             submitForm();
         });
     });
+
+    
 });
 </script>
 {% endblock %}

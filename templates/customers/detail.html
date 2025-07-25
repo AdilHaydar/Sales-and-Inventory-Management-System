@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Sipariş Listesi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Sipariş Listesi</h2>
+    
+    <div class="d-flex justify-content-center">
+        <form method="get" class="d-flex flex-wrap align-items-center justify-content-center mb-4 text-center">
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Ürün:</label>
+            <select name="product" class="form-select">
+                <option value="">Hepsi</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" {% if request.GET.product == product.id|stringformat:"s" %}selected{% endif %}>{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Müşteri:</label>
+            <select name="customer" class="form-select">
+                <option value="{{ customer.id }}" {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %} readonly>{{ customer.company_name }}</option>
+            </select>
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Başlangıç:</label>
+            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Bitiş:</label>
+            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+        </div>
+
+        <div class="me-2 mb-2">
+            <label class="form-label me-1">Durum:</label>
+            <select name="status" class="form-select">
+                <option value="">Hepsi</option>
+                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-outline-success">Filtrele</button>
+        </div>
+
+        </form>
+    </div>
+
+    
+
+    <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center flex-wrap">
+            <strong>Genel Toplam:</strong> {{ total_total|intcomma|add:"₺" }}
+            <span class="ms-3">Bekleyen: 
+                <span class="fw-bold text-muted">{{ total_pending|intcomma|add:"₺" }}</span>
+            </span>
+            <span class="ms-3">Tamamlanan: 
+                <span class="fw-bold text-success">{{ total_completed|intcomma|add:"₺" }}</span>
+            </span>
+            <span class="ms-3">İptal Edilen: 
+                <span class="fw-bold text-danger">{{ total_cancelled|intcomma|add:"₺" }}</span>
+            </span>
+        </div>
+        <div>
+            <a href="{% url 'orders:order_pdf' %}?{{ request.GET.urlencode }}&limit=9999999" class="btn btn-outline-primary">
+                PDF Olarak İndir
+            </a>
+        </div>
+    </div>
+
+
+    <div class="d-none d-md-flex fw-bold bg-dark text-white p-2 rounded">
+        <div class="col-1">ID</div>
+        <div class="col-2">Sipariş Tarihi</div>
+        <div class="col">Ürün</div>
+        <div class="col">Müşteri</div>
+        <div class="col-1">Adet</div>
+        <div class="col">Fiyat</div>
+        <div class="col">Toplam ({{ total_amount|intcomma|add:"₺" }})</div>
+        <div class="col">Durum</div>
+    </div>
+
+    {% for order in orders %}
+    <div class="border p-2 my-2 rounded bg-light">
+        <div class="row align-items-center gy-2" id="row-{{ order.id }}">
+            <div class="col-1">{{ order.id }}</div>
+            <div class="col-2">
+                {{ order.order_date|date:'d-m-Y H:i' }}
+            </div>
+            <div class="col">
+                {{order.product.name}}
+            </div>
+
+            <div class="col">
+                {{order.customer.company_name}}
+            </div>
+
+            <div class="col-1">
+                {{ order.quantity }}
+            </div>
+
+            <div class="col">
+                {{ order.price }}
+            </div>
+
+            <div class="col total-price" data-id="{{ order.id }}">
+                {{ order.total_price }} ₺
+            </div>
+
+            <div class="col">
+                {% if order.status == 'pending' %}Beklemede{% endif %}
+                {% if order.status == 'completed' %}Tamamlandı{% endif %}
+                 {% if order.status == 'cancelled' %}İptal Edildi{% endif %}
+            </div>
+
+            
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    
+
+</div>
+
+<!-- JavaScript -->
+
+{% endblock %}

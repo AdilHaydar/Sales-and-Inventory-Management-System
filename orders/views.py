@@ -14,7 +14,7 @@ from weasyprint import HTML
 from django.db.models import F, ExpressionWrapper, DecimalField, Sum
 from datetime import datetime
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 
 
 
