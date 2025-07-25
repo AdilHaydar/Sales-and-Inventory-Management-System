@@ -59,7 +59,7 @@ class CustomerDetailView(DetailView):
                     filters['order_date__date__gte'] = value
                 elif key == 'end_date':
                     filters['order_date__date__lte'] = value
-                elif key in ['product', 'customer', 'status']:
+                elif key in ['product', 'status']:
                     filters[key] = value
         return filters
         
