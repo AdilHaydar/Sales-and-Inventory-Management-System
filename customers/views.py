@@ -90,68 +90,7 @@ class CustomerDetailView(DetailView):
 
         context['products'] = Product.objects.values('id', 'name')
         
-
         return context
-
-
-
-
-
-    # def get(self, request):
-    #     queryset = Order.objects.filter(customer__is_active=True)
-    #     queryset_on_annotate = queryset.annotate(
-    #         total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
-    #     )
-    #     total_pending = queryset_on_annotate.filter(status='pending').aggregate(
-    #         total_pending=Sum('total_amount'))['total_pending'] or 0
-
-    #     total_completed = queryset_on_annotate.filter(status='completed').aggregate(
-    #         total_completed=Sum('total_amount'))['total_completed'] or 0
-    #     filters = {}
-    #     params = request.GET.copy()
-
-    #     for key, value in params.items():
-    #         if value:
-    #             if key == 'start_date':
-    #                 filters['order_date__date__gte'] = value
-    #             elif key == 'end_date':
-    #                 filters['order_date__date__lte'] = value
-    #             elif key in ['product', 'customer', 'status']:
-    #                 filters[key] = value
-
-    #     queryset = queryset.filter(**filters).annotate(
-    #         total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
-    #     ).order_by('-order_date')
-
-        
-
-    #     paginate_by = self.get_paginate_by(queryset)
-    #     paginator = Paginator(queryset, paginate_by)
-
-    #     page_number = self.request.GET.get("page")
-    #     try:
-    #         page_obj = paginator.page(page_number)
-    #     except PageNotAnInteger:
-    #         page_obj = paginator.page(1)
-    #     except EmptyPage:
-    #         page_obj = paginator.page(paginator.num_pages)
-
-    #     total_amount = sum(order.total_amount for order in page_obj)
-
-    #     context = {
-    #         'orders': page_obj,
-    #         'customers': Customer.objects.filter(is_active=True),
-    #         'products': Product.objects.all(),
-    #         'statuses': STATUS_CHOICES,
-    #         'total_amount': Decimal(total_amount).quantize(Decimal('0.00')),
-    #         'total_pending': "{:.2f}".format(total_pending),
-    #         'total_completed': "{:.2f}".format(total_completed),
-    #         'is_paginated': page_obj.has_other_pages(),
-    #     }
-
-    #     return render(request, self.template_name, context)
-
-
 
 
 class CustomerCreateView(CreateView):
