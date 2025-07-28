@@ -71,13 +71,13 @@ class CustomerDetailView(DetailView):
         
         annotated_queryset = context['object'].orders.annotate(total_amount = ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField()))
         total_pending = annotated_queryset.filter(status='pending').aggregate(
-            total_pending=Sum('total_amount')).get('total_pending', 0)
+            total_pending=Sum('total_amount'))["total_pending"] or 0
         
         total_cancelled = annotated_queryset.filter(status='cancelled').aggregate(
-            total_cancelled=Sum('total_amount')).get('total_cancelled', 0)
+            total_cancelled=Sum('total_amount'))["total_cancelled"] or 0
 
         total_completed = annotated_queryset.filter(status='completed').aggregate(
-            total_completed=Sum('total_amount')).get('total_completed', 0)
+            total_completed=Sum('total_amount'))["total_completed"] or 0
         
         total_amount = sum(order.total_price for order in orders)
         total_total = sum(order.total_price for order in annotated_queryset)
