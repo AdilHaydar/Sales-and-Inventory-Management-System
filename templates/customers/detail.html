@@ -69,7 +69,7 @@
             </span>
         </div>
         <div>
-            <a href="{% url 'orders:order_pdf' %}?{{ request.GET.urlencode }}&limit=9999999" class="btn btn-outline-primary">
+            <a href="{% url 'orders:order_pdf' %}?{{ request.GET.urlencode }}&limit=9999999{% if not request.GET.customer %}&customer={{ customer.id }}{% endif %}" class="btn btn-outline-primary">
                 PDF Olarak İndir
             </a>
         </div>
