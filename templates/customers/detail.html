@@ -37,7 +37,7 @@
         </div>
 
         <div class="me-2 mb-2">
-            <label class="form-label me-1">Durum:</label>
+            <label class="form-label me-1">Durum: (Hariç Tut <input type="checkbox" name="exclude_status" {% if request.GET.exclude_status %}checked{% endif %} class="form-label me-1 mt-1">)</label>
             <select name="status" class="form-select">
                 <option value="">Hepsi</option>
                 <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>

@@ -52,7 +52,11 @@ class CustomerDetailView(DetailView):
 
     def filters(self, params):
         filters = {}
-        
+        status = None
+        exclude_status = params.pop("exclude_status", None)
+        if exclude_status:
+            status = params.pop("status", None)
+
         for key, value in params.items():
             if value:
                 if key == 'start_date':
@@ -61,12 +65,15 @@ class CustomerDetailView(DetailView):
                     filters['order_date__date__lte'] = value
                 elif key in ['product', 'status']:
                     filters[key] = value
-        return filters
+        return (filters, (exclude_status, status))
         
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        orders = context['object'].orders.filter(**self.filters(self.request.GET))
+        filters, (exclude_status, status) = self.filters(self.request.GET.copy())
+        orders = context['object'].orders.filter(**filters)
+        if exclude_status and status:
+            orders = orders.exclude(status__in=status)
         context['orders'] = orders
         
         annotated_queryset = context['object'].orders.annotate(total_amount = ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField()))

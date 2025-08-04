@@ -38,8 +38,15 @@ class OrderListView(ListView):
 
         total_completed = queryset_on_annotate.filter(status='completed').aggregate(
             total_completed=Sum('total_amount'))['total_completed'] or 0
+        
+        total_cancelled = queryset_on_annotate.filter(status='cancelled').aggregate(
+            total_cancelled=Sum('total_amount'))["total_cancelled"] or 0
+        
         filters = {}
         params = request.GET.copy()
+        exclude_status = params.pop('exclude_status', None)
+        if exclude_status:
+            status = params.pop('status', None)
 
         for key, value in params.items():
             if value:
@@ -53,6 +60,8 @@ class OrderListView(ListView):
         queryset = queryset.filter(**filters).annotate(
             total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
         ).order_by('-order_date')
+        if exclude_status and status:
+            queryset = queryset.exclude(status__in=status)
 
         
 
@@ -68,6 +77,7 @@ class OrderListView(ListView):
             page_obj = paginator.page(paginator.num_pages)
 
         total_amount = sum(order.total_amount for order in page_obj)
+        total_total = sum(order.total_price for order in queryset_on_annotate)
 
         context = {
             'orders': page_obj,
@@ -77,6 +87,8 @@ class OrderListView(ListView):
             'total_amount': Decimal(total_amount).quantize(Decimal('0.00')),
             'total_pending': "{:.2f}".format(total_pending),
             'total_completed': "{:.2f}".format(total_completed),
+            'total_cancelled': "{:.2f}".format(total_cancelled),
+            'total_total': "{:.2f}".format(total_total),
             'is_paginated': page_obj.has_other_pages(),
         }
 
@@ -207,6 +219,10 @@ class OrderPdfView(ListView):
         params.pop('limit', None)
         params.pop('page', None)
 
+        exclude_status = params.pop('exclude_status', None)
+        if exclude_status:
+            status = params.pop('status')
+
         for key, value in params.items():
             if value:
                 if key == 'start_date':
@@ -219,6 +235,9 @@ class OrderPdfView(ListView):
         orders = queryset.filter(**filters).annotate(
             total_amount=ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField())
         ).order_by('-order_date')
+        
+        if exclude_status:
+            orders = orders.exclude(status__in=status)
 
         paginate_by = self.get_paginate_by(orders)
         paginator = Paginator(orders, paginate_by)

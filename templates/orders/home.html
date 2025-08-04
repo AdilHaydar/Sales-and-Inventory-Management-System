@@ -41,15 +41,16 @@
         </div>
 
         <div class="me-2 mb-2">
-            <label class="form-label me-1">Durum:</label>
+            <label class="form-label me-1">Durum: (Hariç Tut <input type="checkbox" name="exclude_status" {% if request.GET.exclude_status %}checked{% endif %} class="form-label me-1 mt-1">)</label>
             <select name="status" class="form-select">
                 <option value="">Hepsi</option>
                 <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
                 <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
                 <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
             </select>
+            
         </div>
-
+    
         <div class="me-2 mb-2">
             <label class="form-label me-1">Listelenecek Sipariş:</label>
             <select name="limit" class="form-select">
@@ -75,12 +76,15 @@
 
     <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap">
         <div class="d-flex align-items-center flex-wrap">
-            <strong>Genel Toplam:</strong> {{ total_orders }}₺
+            <strong>Genel Toplam:</strong> {{ total_total|intcomma|add:"₺" }}
             <span class="ms-3">Bekleyen: 
                 <span class="fw-bold text-muted">{{ total_pending|intcomma|add:"₺" }}</span>
             </span>
             <span class="ms-3">Tamamlanan: 
                 <span class="fw-bold text-success">{{ total_completed|intcomma|add:"₺" }}</span>
+            </span>
+            <span class="ms-3">İptal Edilen: 
+                <span class="fw-bold text-danger">{{ total_cancelled|intcomma|add:"₺" }}</span>
             </span>
         </div>
         <div>
@@ -98,7 +102,7 @@
         <div class="col">Müşteri</div>
         <div class="col-1">Adet</div>
         <div class="col">Fiyat</div>
-        <div class="col">Toplam ({{ total_amount }}₺)</div>
+        <div class="col">Toplam ({{ total_amount|intcomma|add:"₺" }})</div>
         <div class="col">Durum</div>
         <div class="col">İşlemler</div>
     </div>
