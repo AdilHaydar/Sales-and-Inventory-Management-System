@@ -122,6 +122,8 @@ class OrderCreateView(CreateView):
 
                     if form.cleaned_data['status'] == 'completed':
                         product.stock -=  form.cleaned_data['quantity']
+                        if product.stock <= 0:
+                                product.is_active = False
                         product.save()
 
                     form.save() 
@@ -157,8 +159,11 @@ class OrderUpdateView(UpdateView):
                     if form.cleaned_data['status'] == 'completed':
                         if order.status != 'completed':
                             product.stock -= form.cleaned_data['quantity']
+                            if product.stock <= 0:
+                                product.is_active = False
                         else:
                             product.stock += order.quantity - form.cleaned_data['quantity']
+                            
                         product.save()
 
                     form.save() 

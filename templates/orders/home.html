@@ -76,15 +76,15 @@
 
     <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap">
         <div class="d-flex align-items-center flex-wrap">
-            <strong>Genel Toplam:</strong> {{ total_total|intcomma|add:"₺" }}
+            <strong>Genel Toplam:</strong> {{ total_total|intcomma|add:"$" }}
             <span class="ms-3">Bekleyen: 
-                <span class="fw-bold text-muted">{{ total_pending|intcomma|add:"₺" }}</span>
+                <span class="fw-bold text-muted">{{ total_pending|intcomma|add:"$" }}</span>
             </span>
             <span class="ms-3">Tamamlanan: 
-                <span class="fw-bold text-success">{{ total_completed|intcomma|add:"₺" }}</span>
+                <span class="fw-bold text-success">{{ total_completed|intcomma|add:"$" }}</span>
             </span>
             <span class="ms-3">İptal Edilen: 
-                <span class="fw-bold text-danger">{{ total_cancelled|intcomma|add:"₺" }}</span>
+                <span class="fw-bold text-danger">{{ total_cancelled|intcomma|add:"$" }}</span>
             </span>
         </div>
         <div>
@@ -102,7 +102,7 @@
         <div class="col">Müşteri</div>
         <div class="col-1">Adet</div>
         <div class="col">Fiyat</div>
-        <div class="col">Toplam ({{ total_amount|intcomma|add:"₺" }})</div>
+        <div class="col">Toplam ({{ total_amount|intcomma|add:"$" }})</div>
         <div class="col">Durum</div>
         <div class="col">İşlemler</div>
     </div>
@@ -136,7 +136,7 @@
             </div>
 
             <div class="col total-price" data-id="{{ order.id }}">
-                {{ order.total_price }} ₺
+                {{ order.total_price }} $
             </div>
 
             <div class="col">
@@ -218,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.querySelector("input[name='quantity']").value = originalData.quantity;
             row.querySelector("input[name='price']").value = originalData.price;
             row.querySelector("select[name='status']").value = originalData.status;
-            row.querySelector(".total-price").textContent = originalData.total_price + " ₺";
+            row.querySelector(".total-price").textContent = originalData.total_price + " $";
 
             row.querySelectorAll("input").forEach(input => input.setAttribute("readonly", true));
             row.querySelector("select[name='status']").setAttribute("disabled", true);
@@ -351,7 +351,7 @@ function attachFormListeners() {
         const total = quantity * price;
 
         if (totalPriceDiv) {
-            totalPriceDiv.innerText = total > 0 ? `Toplam: ${total.toFixed(2)} ₺` : '';
+            totalPriceDiv.innerText = total > 0 ? `Toplam: ${total.toFixed(2)} $` : '';
         }
     }
 
@@ -451,7 +451,7 @@ document.querySelectorAll(".order-form").forEach(form => {
         const quantity = parseFloat(quantityInput.value) || 0;
         const price = parseFloat(priceInput.value) || 0;
         const total = quantity * price;
-        totalPriceDiv.textContent = total.toFixed(2) + " ₺";
+        totalPriceDiv.textContent = total.toFixed(2) + " $";
     }
 
     quantityInput.addEventListener("input", updateTotal);

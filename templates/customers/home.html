@@ -63,7 +63,7 @@
             <div class="col">
                 <span class="text-success fw-bold">
                     {% if customer.pending_total%}
-                        {{ customer.pending_total|floatformat:2|intcomma|add:"₺" }}
+                        {{ customer.pending_total|floatformat:2|intcomma|add:"$" }}
                     {% else %}
                         0.00
                     {% endif %}
@@ -72,7 +72,7 @@
             <div class="col">
                 <span class="text-primary fw-bold">
                     {% if customer.completed_total %}
-                        {{ customer.completed_total|floatformat:2|intcomma|add:"₺" }}
+                        {{ customer.completed_total|floatformat:2|intcomma|add:"$" }}
                     {% else %}
                         0.00
                     {% endif %}
@@ -173,8 +173,9 @@
         });
 
         document.getElementById("cancel-customer-create").addEventListener("click", () => {
-            document.getElementById("new-customer-form-container").innerHTML = "";
-            document.getElementById("show-new-customer-form").classList.remove("d-none");
+            document.getElementById("new-customer-form").innerHTML = "";
+            document.getElementById("new-customer-form").classList.add("d-none");
+            document.getElementById("show-new-customer-form").classList.remove("d-none")
         });
 
     }
@@ -295,6 +296,9 @@
         });
     });
 
+    // document.getElementById("cancel-customer-create").addEventListener("click", () => {
+    //     form_element = document.getElementById("new-customer-form-form").remove()
+    // })
     
 });
 </script>

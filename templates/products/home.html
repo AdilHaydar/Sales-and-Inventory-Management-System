@@ -163,8 +163,9 @@
         });
 
         document.getElementById("cancel-product-create").addEventListener("click", () => {
-            document.getElementById("new-product-form-container").innerHTML = "";
+            document.getElementById("new-product-form").innerHTML = "";
             document.getElementById("show-new-product-form").classList.remove("d-none");
+            document.getElementById("new-product-form").classList.add("d-none");
         });
 
     }

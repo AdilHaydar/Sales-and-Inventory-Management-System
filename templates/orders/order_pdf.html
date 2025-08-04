@@ -35,13 +35,13 @@
                 <td>{{ order.product.name }}</td>
                 <td>{{ order.order_date|date:"d.m.Y" }}</td>
                 <td>{{ order.status }}</td>
-                <td>{{ order.total_amount|floatformat:2 }} ₺</td>
+                <td>{{ order.total_amount|floatformat:2 }} $</td>
             </tr>
             {% endfor %}
 
             <tr class="total-row">
                 <th colspan="5" style="text-align: right;">Toplam Tutar:</th>
-                <th>{{ total_amount|floatformat:2|intcomma|add:"₺" }}</th>
+                <th>{{ total_amount|floatformat:2|intcomma|add:"$" }}</th>
             </tr>
         </tbody>
         
