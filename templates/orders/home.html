@@ -425,6 +425,15 @@ function attachFormListeners() {
         }
     }
 
+function initiliazeCancelButtonForm() {
+    document.getElementById("cancel-order-form").addEventListener("click", () => {
+        const container = document.getElementById("new-order-form")
+        container.innerHTML = ""
+        container.classList.add("d-none")
+        document.getElementById("show-new-order-form").classList.remove("d-none");
+    })
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("show-new-order-form").addEventListener("click", () => {
         fetch("{% url 'orders:order_create' %}")
@@ -437,6 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
             initProductSelectListener();
             attachFormListeners();
             initiliazeNewOrderForm();
+            initiliazeCancelButtonForm()
         });
     });
 });
