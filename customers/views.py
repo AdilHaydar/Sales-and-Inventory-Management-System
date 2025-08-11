@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
+from django.views import View
 from .models import Customer
 from products.models import Product
 from django.http import JsonResponse, HttpResponse
@@ -162,3 +163,36 @@ class CustomerDeleteView(DeleteView):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'success': False, 'errors': 'Method not allowed'})
 
+
+class CustomerCreditListView(ListView):
+    model = Customer
+    template_name = 'customers/credit_list.html'
+    context_object_name = 'customers'
+
+    def get_queryset(self):
+        return self.model.objects.filter(is_active=True, credit__gt=0).order_by('-credit')
+    
+class CustomerCreditDetailView(DetailView):
+    model = Customer
+
+    def get(self, request, *args, **kwargs):
+        html = render_to_string('customers/partials/customer_credit_create_partial.html', request=request, context={'customers': Customer.objects.all()})
+        return HttpResponse(html)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CustomerCreditUpdateView(View):
+    def post(self, request, *args, **kwargs):
+        customer_id = request.POST.get("id")
+        credit = request.POST.get("credit")
+
+        if not customer_id or not credit:
+            return JsonResponse({"success": False, "error": "Eksik veri."})
+
+        try:
+            customer = Customer.objects.get(id=customer_id)
+            customer.credit = credit
+            customer.save()
+            return JsonResponse({"success": True})
+        except Customer.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Müşteri bulunamadı."})
+    

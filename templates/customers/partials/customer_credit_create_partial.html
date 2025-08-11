@@ -1,0 +1,22 @@
+<form action="{% url 'customers:create_credit' %}" method="post" id="new-customer-form-form">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="credit" class="form-label">Borç</label>
+            <select name="id" id="customer" class="form-select">
+                <option value="">Müşteri Seçin</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.company_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="credit" class="form-label">Borç</label>
+            <input type="number" step="0.001" name="credit" id="credit" class="form-control" required>
+        </div>
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success">Kaydet</button>
+            <button type="button" id="cancel-customer-create" class="btn btn-secondary">İptal</button>
+        </div>
+    </div>
+</form>
+

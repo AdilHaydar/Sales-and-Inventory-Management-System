@@ -13,6 +13,7 @@ def json_script(customer, element_id):
         'contact_phone': customer.contact_phone or '',
         'address': customer.address or '',
         'is_active': customer.is_active,
+        'credit': "{:.2f}".format(customer.credit) or 0,
     }
     return mark_safe(json.dumps(data))
 
